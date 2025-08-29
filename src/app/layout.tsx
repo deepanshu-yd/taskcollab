@@ -1,21 +1,13 @@
-import type { Metadata } from "next";
+"use client";
+
+import { SessionProvider } from "next-auth/react";
 import "./globals.css";
-import Providers from "./providers";
 
-export const metadata: Metadata = {
-  title: "Task Manager",
-  description: "Full stack project with Next.js, Prisma, NextAuth",
-};
-
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body>
-        <Providers>{children}</Providers>
+        <SessionProvider>{children}</SessionProvider>
       </body>
     </html>
   );
