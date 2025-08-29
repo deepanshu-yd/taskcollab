@@ -17,6 +17,8 @@ export default function DashboardPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTask, setNewTask] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [isAddingTask, setIsAddingTask] = useState(false);
 
   // Fetch tasks
   useEffect(() => {
@@ -40,6 +42,14 @@ export default function DashboardPage() {
   const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTask.trim()) return;
+    
+    if (newTask.length > 500) {
+      setError("Task title must be less than 500 characters");
+      return;
+    }
+
+    setIsAddingTask(true);
+    setError("");
 
     try {
       const res = await fetch("/api/tasks", {
@@ -48,23 +58,38 @@ export default function DashboardPage() {
         body: JSON.stringify({ title: newTask }),
       });
 
+      const data = await res.json();
+
       if (res.ok) {
-        const task = await res.json();
-        setTasks((prev) => [task, ...prev]);
+        setTasks((prev) => [data, ...prev]);
         setNewTask("");
+      } else {
+        setError(data.error || "Failed to add task");
       }
     } catch (error) {
       console.error("Error adding task:", error);
+      setError("Network error. Please check your connection.");
+    } finally {
+      setIsAddingTask(false);
     }
   };
 
   // Delete task
   const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this task?")) return;
+
     try {
-      await fetch(`/api/tasks/${id}`, { method: "DELETE" });
-      setTasks((prev) => prev.filter((task) => task.id !== id));
+      const res = await fetch(`/api/tasks/${id}`, { method: "DELETE" });
+      
+      if (res.ok) {
+        setTasks((prev) => prev.filter((task) => task.id !== id));
+      } else {
+        const data = await res.json();
+        setError(data.error || "Failed to delete task");
+      }
     } catch (error) {
       console.error("Error deleting task:", error);
+      setError("Network error. Please check your connection.");
     }
   };
 
@@ -83,9 +108,13 @@ export default function DashboardPage() {
             task.id === id ? { ...task, completed } : task
           )
         );
+      } else {
+        const data = await res.json();
+        setError(data.error || "Failed to update task");
       }
     } catch (error) {
       console.error("Error updating task:", error);
+      setError("Network error. Please check your connection.");
     }
   };
 
@@ -172,21 +201,46 @@ export default function DashboardPage() {
         {/* Task Form */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Add New Task</h2>
+          
+          {/* Error Message */}
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              {error}
+            </div>
+          )}
+          
           <form onSubmit={handleAddTask} className="flex gap-3">
             <input
               type="text"
               placeholder="What needs to be done?"
               value={newTask}
-              onChange={(e) => setNewTask(e.target.value)}
+              onChange={(e) => {
+                setNewTask(e.target.value);
+                if (error) setError(""); // Clear error when typing
+              }}
               className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              maxLength={500}
             />
             <button
               type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+              disabled={isAddingTask || !newTask.trim()}
+              className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-medium transition-colors flex items-center"
             >
-              Add Task
+              {isAddingTask ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Adding...
+                </>
+              ) : (
+                "Add Task"
+              )}
             </button>
           </form>
+          
+          {/* Character count */}
+          <div className="mt-2 text-xs text-gray-500 text-right">
+            {newTask.length}/500 characters
+          </div>
         </div>
 
         {/* Task List */}

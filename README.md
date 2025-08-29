@@ -1,36 +1,104 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TaskCollab
+
+A modern task management application built with Next.js, TypeScript, and PostgreSQL. Manage your tasks efficiently with a clean, intuitive interface.
+
+## Features
+
+- Google OAuth authentication
+- Create, read, update, and delete tasks
+- Mark tasks as completed
+- Real-time task statistics
+- Responsive design for all devices
+- Secure user data with Prisma and PostgreSQL
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
+- Node.js 18+ installed
+- PostgreSQL database (local or cloud)
+- Google OAuth credentials
+
+### Installation
+
+1. Clone the repository:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <your-repo-url>
+cd taskcollab
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies:
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Set up environment variables:
+Create a `.env.local` file in the root directory with the following variables:
+```env
+DATABASE_URL="your-postgresql-connection-string"
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="your-secret-key"
+GOOGLE_CLIENT_ID="your-google-client-id"
+GOOGLE_CLIENT_SECRET="your-google-client-secret"
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. Set up the database:
+```bash
+npx prisma generate
+npx prisma db push
+```
 
-## Learn More
+5. Start the development server:
+```bash
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+The application will be available at `http://localhost:3000`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## How to Use
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Getting Started
+1. Visit the homepage
+2. Click "Get Started with Google" to sign in with your Google account
+3. You'll be redirected to your personal dashboard
 
-## Deploy on Vercel
+### Managing Tasks
+- **Add Task**: Type your task in the input field and click "Add Task"
+- **Complete Task**: Check the checkbox next to any task to mark it as completed
+- **Delete Task**: Click the trash icon to permanently remove a task
+- **View Stats**: See your total tasks, completed tasks, and pending tasks at the top
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Account Management
+- Click "Logout" in the top right corner to sign out
+- Your tasks are automatically saved and will be there when you return
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Tech Stack
+
+- **Frontend**: Next.js 15, React, TypeScript, TailwindCSS
+- **Authentication**: NextAuth.js with Google OAuth
+- **Database**: PostgreSQL with Prisma ORM
+- **Deployment**: Ready for Vercel, Netlify, or any Node.js hosting
+
+## Database Schema
+
+The app uses two main models:
+- **User**: Stores user information from Google OAuth
+- **Task**: Stores tasks linked to each user
+
+## API Endpoints
+
+- `GET /api/tasks` - Get all tasks for authenticated user
+- `POST /api/tasks` - Create a new task
+- `PATCH /api/tasks/[id]` - Update a task (title or completion status)
+- `DELETE /api/tasks/[id]` - Delete a task
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
+
+## License
+
+This project is open source and available under the MIT License.
