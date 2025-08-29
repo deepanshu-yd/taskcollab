@@ -42,7 +42,7 @@ export default function DashboardPage() {
   const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTask.trim()) return;
-    
+
     if (newTask.length > 500) {
       setError("Task title must be less than 500 characters");
       return;
@@ -80,7 +80,7 @@ export default function DashboardPage() {
 
     try {
       const res = await fetch(`/api/tasks/${id}`, { method: "DELETE" });
-      
+
       if (res.ok) {
         setTasks((prev) => prev.filter((task) => task.id !== id));
       } else {
@@ -156,7 +156,7 @@ export default function DashboardPage() {
               </div>
             </div>
             <button
-              onClick={() => signOut()}
+              onClick={() => signOut({ callbackUrl: "/" })}
               className="text-sm text-gray-600 hover:text-red-600 transition-colors"
             >
               Logout
@@ -214,14 +214,14 @@ export default function DashboardPage() {
         {/* Task Form */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Add New Task</h2>
-          
+
           {/* Error Message */}
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
               {error}
             </div>
           )}
-          
+
           <form onSubmit={handleAddTask} className="flex gap-3">
             <input
               type="text"
@@ -249,7 +249,7 @@ export default function DashboardPage() {
               )}
             </button>
           </form>
-          
+
           {/* Character count */}
           <div className="mt-2 text-xs text-gray-500 text-right">
             {newTask.length}/500 characters
@@ -261,7 +261,7 @@ export default function DashboardPage() {
           <div className="p-6 border-b">
             <h2 className="text-lg font-semibold text-gray-800">Your Tasks</h2>
           </div>
-          
+
           {tasks.length === 0 ? (
             <div className="p-12 text-center">
               <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -291,7 +291,7 @@ export default function DashboardPage() {
                         </span>
                       )}
                     </div>
-                    
+
                     <div className="flex items-center space-x-2">
                       <span className="text-xs text-gray-500">
                         {new Date(task.createdAt).toLocaleDateString()}

@@ -21,7 +21,7 @@ export async function GET() {
   } catch (error) {
     console.error("Error fetching tasks:", error);
     return NextResponse.json(
-      { error: "Failed to fetch tasks" }, 
+      { error: "Failed to fetch tasks" },
       { status: 500 }
     );
   }
@@ -41,7 +41,7 @@ export async function POST(req: Request) {
 
     if (!title || typeof title !== 'string' || title.trim() === "") {
       return NextResponse.json(
-        { error: "Title is required and must be a valid string" }, 
+        { error: "Title is required and must be a valid string" },
         { status: 400 }
       );
     }
@@ -49,7 +49,7 @@ export async function POST(req: Request) {
     // Limit title length
     if (title.length > 500) {
       return NextResponse.json(
-        { error: "Title must be less than 500 characters" }, 
+        { error: "Title must be less than 500 characters" },
         { status: 400 }
       );
     }
@@ -65,7 +65,7 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error("Error creating task:", error);
     return NextResponse.json(
-      { error: "Failed to create task" }, 
+      { error: "Failed to create task" },
       { status: 500 }
     );
   }

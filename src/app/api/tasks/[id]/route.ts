@@ -21,21 +21,21 @@ export async function PATCH(
     // Validate input
     if (title !== undefined && (typeof title !== 'string' || title.length > 500)) {
       return NextResponse.json(
-        { error: "Title must be a string and less than 500 characters" }, 
+        { error: "Title must be a string and less than 500 characters" },
         { status: 400 }
       );
     }
 
     if (completed !== undefined && typeof completed !== 'boolean') {
       return NextResponse.json(
-        { error: "Completed must be a boolean" }, 
+        { error: "Completed must be a boolean" },
         { status: 400 }
       );
     }
 
     // First, check if the task exists and belongs to the user
     const existingTask = await prisma.task.findFirst({
-      where: { 
+      where: {
         id: params.id,
         user: { email: session.user.email }
       }
@@ -43,7 +43,7 @@ export async function PATCH(
 
     if (!existingTask) {
       return NextResponse.json(
-        { error: "Task not found or access denied" }, 
+        { error: "Task not found or access denied" },
         { status: 404 }
       );
     }
@@ -60,7 +60,7 @@ export async function PATCH(
   } catch (error) {
     console.error("Error updating task:", error);
     return NextResponse.json(
-      { error: "Failed to update task" }, 
+      { error: "Failed to update task" },
       { status: 500 }
     );
   }
@@ -80,7 +80,7 @@ export async function DELETE(
 
     // First, check if the task exists and belongs to the user
     const existingTask = await prisma.task.findFirst({
-      where: { 
+      where: {
         id: params.id,
         user: { email: session.user.email }
       }
@@ -88,7 +88,7 @@ export async function DELETE(
 
     if (!existingTask) {
       return NextResponse.json(
-        { error: "Task not found or access denied" }, 
+        { error: "Task not found or access denied" },
         { status: 404 }
       );
     }
@@ -99,7 +99,7 @@ export async function DELETE(
   } catch (error) {
     console.error("Error deleting task:", error);
     return NextResponse.json(
-      { error: "Failed to delete task" }, 
+      { error: "Failed to delete task" },
       { status: 500 }
     );
   }
