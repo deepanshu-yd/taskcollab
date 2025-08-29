@@ -3,7 +3,7 @@ import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
+ const prisma = new PrismaClient();
 
 export const authOptions: AuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -14,19 +14,11 @@ export const authOptions: AuthOptions = {
     }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
-  session: {
-    strategy: "database",
-  },
-
   callbacks: {
     async redirect({ url, baseUrl }) {
       // Always send users to dashboard after login
       return `${baseUrl}/dashboard`;
     },
-  },
-
-  pages: {
-    newUser: "/dashboard",
   },
 };
 

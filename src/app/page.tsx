@@ -17,7 +17,7 @@ export default function Home() {
   return (
     <div>
       <p>Welcome to TaskCollab</p>
-      <button onClick={() => signIn("google")}>Sign in with Google</button>
+      <button onClick={() => signIn("google")} className="cursor-pointer">Sign in with Google</button>
     </div>
   );
 }
