@@ -13,7 +13,7 @@ export const authOptions: AuthOptions = {
   ],
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
-    async redirect({ url, baseUrl }) {
+    async redirect({ baseUrl }) {
       // Always send users to dashboard after login
       return `${baseUrl}/dashboard`;
     },

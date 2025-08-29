@@ -6,9 +6,10 @@ import { prisma } from "@/lib/prisma";
 // PATCH /api/tasks/:id → toggle complete or update
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await context.params;
     const session = await getServerSession(authOptions);
 
     if (!session || !session.user?.email) {
@@ -69,9 +70,10 @@ export async function PATCH(
 // DELETE /api/tasks/:id
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await context.params;
     const session = await getServerSession(authOptions);
 
     if (!session || !session.user?.email) {
