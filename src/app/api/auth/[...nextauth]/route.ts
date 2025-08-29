@@ -17,18 +17,6 @@ export const authOptions: AuthOptions = {
   session: {
     strategy: "jwt",
   },
-
-  callbacks: {
-    async redirect({ url, baseUrl }) {
-      // Always send users to dashboard after login
-      return `${baseUrl}/dashboard`;
-    },
-  },
-
-  pages: {
-    signIn: "/api/auth/signin",
-    newUser: "/dashboard",
-  },
 };
 
 const handler = NextAuth(authOptions);
