@@ -1,35 +1,93 @@
 "use client";
 
-import { useSession, signOut } from "next-auth/react";
+import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 
-export default function Dashboard() {
-  const { data: session, status } = useSession();
+type Task = {
+  id: string;
+  title: string;
+  completed: boolean;
+};
 
-  if (status === "loading") {
-    return <p>Loading...</p>;
-  }
+export default function DashboardPage() {
+  const { data: session } = useSession();
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [newTask, setNewTask] = useState("");
 
-  if (!session) {
-    return <p>You must be signed in to view this page.</p>;
-  }
+  // Fetch tasks
+  useEffect(() => {
+    const fetchTasks = async () => {
+      const res = await fetch("/api/tasks");
+      if (res.ok) {
+        const data = await res.json();
+        setTasks(data);
+      }
+    };
+    fetchTasks();
+  }, []);
+
+  // Create new task
+  const handleAddTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTask.trim()) return;
+
+    const res = await fetch("/api/tasks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: newTask }),
+    });
+
+    if (res.ok) {
+      const task = await res.json();
+      setTasks((prev) => [...prev, task]);
+      setNewTask("");
+    }
+  };
+
+  // Delete task
+  const handleDelete = async (id: string) => {
+    await fetch(`/api/tasks/${id}`, { method: "DELETE" });
+    setTasks((prev) => prev.filter((task) => task.id !== id));
+  };
 
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold">Dashboard</h1>
-      <p className="mt-4">Welcome, {session.user?.name}</p>
-      <p>Email: {session.user?.email}</p>
-      <img
-        src={session.user?.image || ""}
-        alt="User Avatar"
-        className="rounded-full w-16 h-16 mt-4"
-      />
+    <div className="max-w-xl mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-4">Welcome, {session?.user?.name}</h1>
 
-      <button
-        onClick={() => signOut()}
-        className="mt-6 bg-red-500 text-white px-4 py-2 rounded"
-      >
-        Sign out
-      </button>
+      {/* Task Form */}
+      <form onSubmit={handleAddTask} className="flex gap-2 mb-6">
+        <input
+          type="text"
+          placeholder="Enter new task"
+          value={newTask}
+          onChange={(e) => setNewTask(e.target.value)}
+          className="flex-1 border rounded px-3 py-2"
+        />
+        <button
+          type="submit"
+          className="bg-blue-500 text-white px-4 py-2 rounded"
+        >
+          Add
+        </button>
+      </form>
+
+      {/* Task List */}
+      <ul className="space-y-2">
+        {tasks.map((task) => (
+          <li
+            key={task.id}
+            className="flex justify-between items-center border p-2 rounded"
+          >
+            <span>{task.title}</span>
+            <button
+              onClick={() => handleDelete(task.id)}
+              className="text-red-500 hover:underline"
+            >
+              Delete
+            </button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
