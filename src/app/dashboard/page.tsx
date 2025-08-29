@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 type Task = {
   id: string;
@@ -10,9 +11,17 @@ type Task = {
 };
 
 export default function DashboardPage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTask, setNewTask] = useState("");
+
+  // 🔒 Protect route
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/"); // redirect to home page which has the sign in button
+    }
+  }, [status, router]);
 
   // Fetch tasks
   useEffect(() => {
@@ -23,8 +32,10 @@ export default function DashboardPage() {
         setTasks(data);
       }
     };
-    fetchTasks();
-  }, []);
+    if (status === "authenticated") {
+      fetchTasks();
+    }
+  }, [status]);
 
   // Create new task
   const handleAddTask = async (e: React.FormEvent) => {
@@ -50,9 +61,23 @@ export default function DashboardPage() {
     setTasks((prev) => prev.filter((task) => task.id !== id));
   };
 
+  if (status === "loading") {
+    return <p className="text-center mt-10">Loading...</p>;
+  }
+
   return (
     <div className="max-w-xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-4">Welcome, {session?.user?.name}</h1>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">
+          Welcome, {session?.user?.name}
+        </h1>
+        <button
+          onClick={() => signOut({ callbackUrl: "/" })}
+          className="text-sm text-gray-600 hover:underline"
+        >
+          Logout
+        </button>
+      </div>
 
       {/* Task Form */}
       <form onSubmit={handleAddTask} className="flex gap-2 mb-6">
@@ -78,7 +103,26 @@ export default function DashboardPage() {
             key={task.id}
             className="flex justify-between items-center border p-2 rounded"
           >
-            <span>{task.title}</span>
+            <input
+              type="text"
+              value={task.title}
+              onChange={(e) => {
+                const updatedTitle = e.target.value;
+                setTasks((prev) =>
+                  prev.map((t) =>
+                    t.id === task.id ? { ...t, title: updatedTitle } : t
+                  )
+                );
+              }}
+              onBlur={async () => {
+                await fetch(`/api/tasks/${task.id}`, {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ title: task.title }),
+                });
+              }}
+              className="flex-1 border rounded px-2 py-1 mr-2"
+            />
             <button
               onClick={() => handleDelete(task.id)}
               className="text-red-500 hover:underline"

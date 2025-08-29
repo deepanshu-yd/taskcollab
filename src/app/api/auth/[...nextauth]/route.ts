@@ -15,7 +15,7 @@ export const authOptions: AuthOptions = {
   ],
   secret: process.env.NEXTAUTH_SECRET,
   session: {
-    strategy: "jwt",
+    strategy: "database",
   },
 
   callbacks: {
@@ -26,7 +26,6 @@ export const authOptions: AuthOptions = {
   },
 
   pages: {
-    signIn: "/api/auth/signin",
     newUser: "/dashboard",
   },
 };
