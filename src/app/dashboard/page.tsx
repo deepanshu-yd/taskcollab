@@ -95,6 +95,13 @@ export default function DashboardPage() {
 
   // Toggle completed
   const handleToggleComplete = async (id: string, completed: boolean) => {
+    // Optimistic update - update UI immediately
+    setTasks((prev) =>
+      prev.map((task) =>
+        task.id === id ? { ...task, completed } : task
+      )
+    );
+
     try {
       const res = await fetch(`/api/tasks/${id}`, {
         method: "PATCH",
@@ -102,17 +109,23 @@ export default function DashboardPage() {
         body: JSON.stringify({ completed }),
       });
 
-      if (res.ok) {
+      if (!res.ok) {
+        // Revert optimistic update on error
         setTasks((prev) =>
           prev.map((task) =>
-            task.id === id ? { ...task, completed } : task
+            task.id === id ? { ...task, completed: !completed } : task
           )
         );
-      } else {
         const data = await res.json();
         setError(data.error || "Failed to update task");
       }
     } catch (error) {
+      // Revert optimistic update on network error
+      setTasks((prev) =>
+        prev.map((task) =>
+          task.id === id ? { ...task, completed: !completed } : task
+        )
+      );
       console.error("Error updating task:", error);
       setError("Network error. Please check your connection.");
     }
