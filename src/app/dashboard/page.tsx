@@ -16,14 +16,21 @@ export default function DashboardPage() {
   const { data: session } = useSession();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTask, setNewTask] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
   // Fetch tasks
   useEffect(() => {
     const fetchTasks = async () => {
-      const res = await fetch("/api/tasks");
-      if (res.ok) {
-        const data = await res.json();
-        setTasks(data);
+      try {
+        const res = await fetch("/api/tasks");
+        if (res.ok) {
+          const data = await res.json();
+          setTasks(data);
+        }
+      } catch (error) {
+        console.error("Error fetching tasks:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchTasks();
@@ -34,107 +41,211 @@ export default function DashboardPage() {
     e.preventDefault();
     if (!newTask.trim()) return;
 
-    const res = await fetch("/api/tasks", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: newTask }),
-    });
+    try {
+      const res = await fetch("/api/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: newTask }),
+      });
 
-    if (res.ok) {
-      const task = await res.json();
-      setTasks((prev) => [...prev, task]);
-      setNewTask("");
+      if (res.ok) {
+        const task = await res.json();
+        setTasks((prev) => [task, ...prev]);
+        setNewTask("");
+      }
+    } catch (error) {
+      console.error("Error adding task:", error);
     }
   };
 
   // Delete task
   const handleDelete = async (id: string) => {
-    await fetch(`/api/tasks/${id}`, { method: "DELETE" });
-    setTasks((prev) => prev.filter((task) => task.id !== id));
+    try {
+      await fetch(`/api/tasks/${id}`, { method: "DELETE" });
+      setTasks((prev) => prev.filter((task) => task.id !== id));
+    } catch (error) {
+      console.error("Error deleting task:", error);
+    }
   };
 
   // Toggle completed
   const handleToggleComplete = async (id: string, completed: boolean) => {
-    const res = await fetch(`/api/tasks/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ completed }),
-    });
+    try {
+      const res = await fetch(`/api/tasks/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ completed }),
+      });
 
-    if (res.ok) {
-      setTasks((prev) =>
-        prev.map((task) =>
-          task.id === id ? { ...task, completed } : task
-        )
-      );
+      if (res.ok) {
+        setTasks((prev) =>
+          prev.map((task) =>
+            task.id === id ? { ...task, completed } : task
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Error updating task:", error);
     }
   };
 
-  return (
-    <div className="max-w-xl mx-auto p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">
-          Welcome, {session?.user?.name || ""}
-        </h1>
-        <button
-          onClick={() => signOut()}
-          className="text-sm text-red-500 hover:underline"
-        >
-          Logout
-        </button>
+  const completedTasks = tasks.filter(task => task.completed).length;
+  const totalTasks = tasks.length;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
+    );
+  }
 
-      {/* Task Form */}
-      <form onSubmit={handleAddTask} className="flex gap-2 mb-6">
-        <input
-          type="text"
-          placeholder="Enter new task"
-          value={newTask}
-          onChange={(e) => setNewTask(e.target.value)}
-          className="flex-1 border rounded px-3 py-2"
-        />
-        <button
-          type="submit"
-          className="bg-blue-500 text-white px-4 py-2 rounded"
-        >
-          Add
-        </button>
-      </form>
-
-      {/* Task List */}
-      <ul className="space-y-2">
-        {tasks.map((task) => (
-          <li
-            key={task.id}
-            className={`flex justify-between items-center border p-2 rounded ${
-              task.completed ? "bg-green-100" : ""
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={task.completed}
-                onChange={(e) =>
-                  handleToggleComplete(task.id, e.target.checked)
-                }
-              />
-              <span
-                className={`${
-                  task.completed ? "line-through text-gray-500" : ""
-                }`}
-              >
-                {task.title}
-              </span>
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b">
+        <div className="max-w-4xl mx-auto px-6 py-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-4">
+              <h1 className="text-2xl font-bold text-gray-800">TaskCollab</h1>
+              <div className="hidden sm:flex items-center space-x-2 text-sm text-gray-500">
+                <span>Welcome back,</span>
+                <span className="font-medium text-gray-700">{session?.user?.name}</span>
+              </div>
             </div>
             <button
-              onClick={() => handleDelete(task.id)}
-              className="text-red-500 hover:underline"
+              onClick={() => signOut()}
+              className="text-sm text-gray-600 hover:text-red-600 transition-colors"
             >
-              Delete
+              Logout
             </button>
-          </li>
-        ))}
-      </ul>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-4xl mx-auto px-6 py-8">
+        {/* Stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+          <div className="bg-white p-6 rounded-lg shadow-sm">
+            <div className="flex items-center">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              </div>
+              <div className="ml-4">
+                <p className="text-2xl font-semibold text-gray-800">{totalTasks}</p>
+                <p className="text-gray-600">Total Tasks</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow-sm">
+            <div className="flex items-center">
+              <div className="p-2 bg-green-100 rounded-lg">
+                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div className="ml-4">
+                <p className="text-2xl font-semibold text-gray-800">{completedTasks}</p>
+                <p className="text-gray-600">Completed</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow-sm">
+            <div className="flex items-center">
+              <div className="p-2 bg-orange-100 rounded-lg">
+                <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div className="ml-4">
+                <p className="text-2xl font-semibold text-gray-800">{totalTasks - completedTasks}</p>
+                <p className="text-gray-600">Pending</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Task Form */}
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">Add New Task</h2>
+          <form onSubmit={handleAddTask} className="flex gap-3">
+            <input
+              type="text"
+              placeholder="What needs to be done?"
+              value={newTask}
+              onChange={(e) => setNewTask(e.target.value)}
+              className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <button
+              type="submit"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+            >
+              Add Task
+            </button>
+          </form>
+        </div>
+
+        {/* Task List */}
+        <div className="bg-white rounded-lg shadow-sm">
+          <div className="p-6 border-b">
+            <h2 className="text-lg font-semibold text-gray-800">Your Tasks</h2>
+          </div>
+          
+          {tasks.length === 0 ? (
+            <div className="p-12 text-center">
+              <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              <h3 className="text-lg font-medium text-gray-600 mb-2">No tasks yet</h3>
+              <p className="text-gray-500">Create your first task to get started!</p>
+            </div>
+          ) : (
+            <ul className="divide-y divide-gray-200">
+              {tasks.map((task) => (
+                <li key={task.id} className="p-4 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <input
+                        type="checkbox"
+                        checked={task.completed}
+                        onChange={(e) => handleToggleComplete(task.id, e.target.checked)}
+                        className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                      />
+                      <span className={`text-gray-800 ${task.completed ? "line-through text-gray-500" : ""}`}>
+                        {task.title}
+                      </span>
+                      {task.completed && (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          Completed
+                        </span>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xs text-gray-500">
+                        {new Date(task.createdAt).toLocaleDateString()}
+                      </span>
+                      <button
+                        onClick={() => handleDelete(task.id)}
+                        className="text-red-500 hover:text-red-700 transition-colors"
+                        title="Delete task"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
